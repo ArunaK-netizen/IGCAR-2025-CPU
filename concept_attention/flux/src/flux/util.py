@@ -157,7 +157,7 @@ def load_t5(device: str | torch.device = "cuda", max_length: int = 512) -> HFEmb
     # ).to(device)
 # 
     # return t5_encoder
-    return HFEmbedder("google/t5-small", max_length=max_length, torch_dtype=torch.bfloat16).to(device)
+    return HFEmbedder("google-t5/t5-small", max_length=max_length, torch_dtype=torch.bfloat16).to(device)
 
 def load_clip(device: str | torch.device = "cuda") -> HFEmbedder:
     return HFEmbedder("openai/clip-vit-large-patch14", max_length=77, torch_dtype=torch.bfloat16).to(device)
