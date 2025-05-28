@@ -145,7 +145,9 @@ def encode_image(
     init_image = torch.nn.functional.interpolate(init_image, (height, width))
     if offload:
         autoencoder.encoder.to(device)
-    init_image = autoencoder.encode(init_image.to())     # arun - offload the encoder from gpu to cpu to save gpu space
+    init_image = init_image.to(device)
+    autoencoder.encoder.to(device)
+    init_image = autoencoder.encode(init_image)     # arun - offload the encoder from gpu to cpu to save gpu space
     if offload:
         autoencoder = autoencoder.cpu()
         torch.cuda.empty_cache()
