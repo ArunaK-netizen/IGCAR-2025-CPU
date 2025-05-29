@@ -34,7 +34,7 @@ def load_flow_model(
     ):
         ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
 
-    with torch.device("cuda" if ckpt_path else device):
+    with torch.device("cuda" if ckpt_path else device):    # this is the line causing gpu memory insufficient error
         model = dit_class(configs[name].params, attention_block_class=attention_block_class)
 
     if ckpt_path:
