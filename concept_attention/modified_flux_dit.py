@@ -100,17 +100,18 @@ class ModifiedFluxDiT(nn.Module):
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
 
         # running on sequences img
-        device = torch.device('cuda')  # get model device
-        print(f"###################{device}#############################")
-        img = img.to(device)
-        txt = txt.to(device)
-        concepts = concepts.to(device)
-        concept_vec = concept_vec.to(device)
-        timesteps = timesteps.to(device)
-        y = y.to(device)
-        img_ids = img_ids.to(device)
-        txt_ids = txt_ids.to(device)
-        concept_ids = concept_ids.to(device)
+        device0 = torch.device('cuda:0')  # get model device
+        device1 = torch.device('cuda:1')
+        print(f"###################{device0}#############################")
+        img = img.to(device0)
+        txt = txt.to(device0)
+        concepts = concepts.to(device0)
+        concept_vec = concept_vec.to(device0)
+        timesteps = timesteps.to(device0)
+        y = y.to(device0)
+        img_ids = img_ids.to(device0)
+        txt_ids = txt_ids.to(device0)
+        concept_ids = concept_ids.to(device0)
 
         img = self.img_in(img)
         vec = self.time_in(timestep_embedding(timesteps, 256))

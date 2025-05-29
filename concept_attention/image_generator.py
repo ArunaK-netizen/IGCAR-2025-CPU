@@ -8,7 +8,7 @@ from transformers import pipeline
 from concept_attention.flux.src.flux.cli import SamplingOptions
 from concept_attention.flux.src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from concept_attention.flux.src.flux.util import configs, embed_watermark, load_ae, load_clip, load_t5
-
+from torch import nn
 from huggingface_hub import hf_hub_download
 from safetensors.torch import load_file as load_sft
 
@@ -47,6 +47,9 @@ def load_flow_model(
         del sd["txt_in.weight"]
         del sd["txt_in.bias"]
         model.load_state_dict(sd, strict=False, assign=True)
+
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
     
     # 4. Ensure model is on target device
     return model.to(device).to(torch.bfloat16)
@@ -76,7 +79,7 @@ class FluxGenerator():
         attention_block_class=ModifiedDoubleStreamBlock,
         dit_class=ModifiedFluxDiT
     ):
-        self.device = torch.device(device)
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.offload = offload
         self.model_name = model_name
         self.is_schnell = model_name == "flux-schnell"
