@@ -72,6 +72,7 @@ class ModifiedFluxDiT(nn.Module):
 
         self.final_layer = LastLayer(self.hidden_size, 1, self.out_channels)
 
+
     def forward(
         self,
         img: Tensor,
@@ -90,6 +91,14 @@ class ModifiedFluxDiT(nn.Module):
         joint_attention_kwargs=None,
         **kwargs
     ) -> Tensor:
+        device = img.device  
+        self.img_in = self.img_in.to(device)
+        self.time_in = self.time_in.to(device)
+        self.vector_in = self.vector_in.to(device)
+        self.guidance_in = self.guidance_in.to(device)
+        self.txt_in = self.txt_in.to(device)
+        self.pe_embedder = self.pe_embedder.to(device)
+        self.final_layer = self.final_layer.to(device)
         assert concept_vec is not None, "Concept vectors must be provided for this implementation."
         if img.ndim != 3 or txt.ndim != 3:
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
