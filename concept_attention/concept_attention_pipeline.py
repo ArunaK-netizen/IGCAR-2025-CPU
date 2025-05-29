@@ -218,6 +218,8 @@ class ConceptAttentionFluxPipeline():
             offload=self.flux_generator.offload,
             device=device,
         )
+
+        print(f"###################{encoded_image_without_noise.shape}######################")    # arun - should be 1024 x 1024
         # Do N trials
         combined_concept_attention_dict = {
             "cross_attention_image_vectors": [],
@@ -261,7 +263,7 @@ class ConceptAttentionFluxPipeline():
                 torch.cuda.empty_cache()
                 self.flux_generator.model = self.flux_generator.model.to(device)
             # Denoise the intermediate images
-            guidance_vec = torch.full((encoded_image.shape[0],), 0.0, device=encoded_image.device, dtype=encoded_image.dtype)
+            guidance_vec = torch.full((encoded_image.shape[0],), 0.0, device=encoded_image.device, dtype=encoded_image.dtype)   # arun - 0 disables the model trying to push the image more toward the text prompt artificially
             t_curr = timesteps[0]
             t_prev = timesteps[1]
             t_vec = torch.full((encoded_image.shape[0],), t_curr, dtype=encoded_image.dtype, device=encoded_image.device)

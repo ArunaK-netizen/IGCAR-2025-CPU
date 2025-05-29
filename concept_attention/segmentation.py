@@ -137,12 +137,12 @@ def encode_image(
         image = transform(image)
     # init_image = image.convert("RGB")
     # init_image = np.array(image)
-    init_image = image
+    init_image = image  # still an H x W x C tensor
     if isinstance(init_image, np.ndarray):
-        init_image = torch.from_numpy(init_image).permute(2, 0, 1).float() / 255.0
-    init_image = init_image.unsqueeze(0) 
+        init_image = torch.from_numpy(init_image).permute(2, 0, 1).float() / 255.0     # arun - if it is a numpy array HxWxC convert it to a pytorch tensor CxHxW and scale it to 0 and 1
+    init_image = init_image.unsqueeze(0)   # arun - this will add a batch size i.e now it will become 1 x H x W x C
     init_image = init_image.to(device)
-    init_image = torch.nn.functional.interpolate(init_image, (height, width))
+    init_image = torch.nn.functional.interpolate(init_image, (height, width))    # arun - we resize the original image tensor to specified height and width
     if offload:
         autoencoder.encoder.to(device)
     init_image = init_image.to(device)
@@ -152,9 +152,9 @@ def encode_image(
         autoencoder = autoencoder.cpu()
         torch.cuda.empty_cache()
 
-    print(init_image.shape)  # arun - what would be the dimensions of this image? [1, 16, 64, 64]
+    print(f'#####################################This is the encoded image shape: {init_image.shape}#########################################')  # arun - what would be the dimensions of this image? [1, 16, 64, 64]
     
-    return init_image
+    return init_image  # this is a tensor not an image
 
 
 @torch.no_grad()

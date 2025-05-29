@@ -34,7 +34,8 @@ def prepare(t5: HFEmbedder, clip: HFEmbedder, img: Tensor, prompt: str | list[st
         bs = len(prompt)
 
     img = rearrange(img, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)    # arun - split images in patches of 2 x 2 and Rearranges into shape [batch, num_patches, patch_vector]
-    if img.shape[0] == 1 and bs > 1: 
+    print(f"###################### patches group {img.shape} #####################")
+    if img.shape[0] == 1 and bs > 1:   # arun - repeat image for multiple prompts
         img = repeat(img, "1 ... -> bs ...", bs=bs)
 
     img_ids = torch.zeros(h // 2, w // 2, 3)
