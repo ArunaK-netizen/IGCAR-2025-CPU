@@ -34,17 +34,22 @@ def load_flow_model(
     ):
         ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
 
-    with torch.device("meta" if ckpt_path is not None else device):
-        model = dit_class(configs[name].params, attention_block_class=attention_block_class).to(torch.bfloat16)
+    with torch.device("cuda" if ckpt_path else device):
+        model = dit_class(configs[name].params, attention_block_class=attention_block_class)
 
-    if ckpt_path is not None:
+    if ckpt_path:
         print("Loading checkpoint")
-        # load_sft doesn't support torch.device
+        # 1. Allocate memory first
+        model.to_empty(device=device)
+        # 2. Load weights
         sd = load_sft(ckpt_path, device=str(device))
-        missing, unexpected = model.load_state_dict(sd, strict=False, assign=True)
-        # print_load_warning(missing, unexpected)
-
-    return model
+        # 3. Remove incompatible text layer keys
+        del sd["txt_in.weight"]
+        del sd["txt_in.bias"]
+        model.load_state_dict(sd, strict=False, assign=True)
+    
+    # 4. Ensure model is on target device
+    return model.to(device).to(torch.bfloat16)
 
 def get_models(
     name: str, 

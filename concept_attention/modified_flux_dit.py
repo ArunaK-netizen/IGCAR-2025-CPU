@@ -9,12 +9,14 @@ from concept_attention.flux.src.flux.modules.layers import (DoubleStreamBlock, E
 
 from concept_attention.modified_double_stream_block import ModifiedDoubleStreamBlock
 from concept_attention.modified_single_stream_block import ModifiedSingleStreamBlock
+import torch
+torch.cuda.empty_cache()
 
 @dataclass
 class FluxParams:
     in_channels: int
     vec_in_dim: int
-    context_in_dim: int
+    context_in_dim : int
     hidden_size: int
     mlp_ratio: float
     num_heads: int
@@ -37,6 +39,7 @@ class ModifiedFluxDiT(nn.Module):
         self.params = params
         self.in_channels = params.in_channels
         self.out_channels = self.in_channels
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if params.hidden_size % params.num_heads != 0:
             raise ValueError(
                 f"Hidden size {params.hidden_size} must be divisible by num_heads {params.num_heads}"
@@ -91,19 +94,24 @@ class ModifiedFluxDiT(nn.Module):
         joint_attention_kwargs=None,
         **kwargs
     ) -> Tensor:
-        device = img.device  
-        self.img_in = self.img_in.to(device)
-        self.time_in = self.time_in.to(device)
-        self.vector_in = self.vector_in.to(device)
-        self.guidance_in = self.guidance_in.to(device)
-        self.txt_in = self.txt_in.to(device)
-        self.pe_embedder = self.pe_embedder.to(device)
-        self.final_layer = self.final_layer.to(device)
+        
         assert concept_vec is not None, "Concept vectors must be provided for this implementation."
         if img.ndim != 3 or txt.ndim != 3:
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
 
         # running on sequences img
+        device = torch.device('cuda')  # get model device
+        print(f"###################{device}#############################")
+        img = img.to(device)
+        txt = txt.to(device)
+        concepts = concepts.to(device)
+        concept_vec = concept_vec.to(device)
+        timesteps = timesteps.to(device)
+        y = y.to(device)
+        img_ids = img_ids.to(device)
+        txt_ids = txt_ids.to(device)
+        concept_ids = concept_ids.to(device)
+
         img = self.img_in(img)
         vec = self.time_in(timestep_embedding(timesteps, 256))
         if self.params.guidance_embed:
