@@ -19,7 +19,7 @@ pipeline_output = pipeline.encode_image(
     prompt="A fire breathing dragon.",
     width=1024,
     height=1024,
-)
+)    # arun - what is the dimensions of this ? 
 
 concept_heatmaps = pipeline_output.concept_heatmaps
 

@@ -100,7 +100,8 @@ def add_noise_to_image(
         device=device,
         dtype=torch.bfloat16,
         seed=seed,
-    )
+    )   # arun - dimensions are 1 x height x width?
+    print(f"#################shape of the noise x: {x.shape}##########################")
     timesteps = get_schedule(
         num_steps,
         x.shape[-1] * x.shape[-2] // 4,
@@ -147,14 +148,14 @@ def encode_image(
         autoencoder.encoder.to(device)
     init_image = init_image.to(device)
     autoencoder.encoder.to(device)
-    init_image = autoencoder.encode(init_image)     # arun - offload the encoder from gpu to cpu to save gpu space
+    init_image = autoencoder.encode(init_image)     # arun - encoding image into latent space returns dimensions 1 x 16 x 64 x 64
     if offload:
         autoencoder = autoencoder.cpu()
         torch.cuda.empty_cache()
 
     print(f'#####################################This is the encoded image shape: {init_image.shape}#########################################')  # arun - what would be the dimensions of this image? [1, 16, 64, 64]
     
-    return init_image  # this is a tensor not an image
+    return init_image  # this is a tensor not an image dimensions 1 x 16 x 64 x 64
 
 
 @torch.no_grad()

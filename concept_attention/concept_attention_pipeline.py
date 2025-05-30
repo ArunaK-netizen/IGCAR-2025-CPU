@@ -200,7 +200,7 @@ class ConceptAttentionFluxPipeline():
         device: str = "cuda:0",
         return_pil_heatmaps: bool = True,
         seed: int = 0,
-        cmap="binary",   # arun changed from plasma to binary
+        cmap="binary",   # arun - changed from plasma to binary
         stop_after_multi_modal_attentions=True,
         softmax=True
     ) -> ConceptAttentionPipelineOutput:
@@ -217,9 +217,9 @@ class ConceptAttentionFluxPipeline():
             self.flux_generator.ae,
             offload=self.flux_generator.offload,
             device=device,
-        )
+        ) # arun - dimensions 1 x 16 x 64 x 64
 
-        print(f"###################{encoded_image_without_noise.shape}######################")    # arun - should be 1024 x 1024
+        print(f"###################shape of the encoded image: {encoded_image_without_noise.shape}######################")    # arun - should be 1024 x 1024
         # Do N trials
         combined_concept_attention_dict = {
             "cross_attention_image_vectors": [],
@@ -236,7 +236,7 @@ class ConceptAttentionFluxPipeline():
                 num_steps=num_steps,
                 noise_timestep=noise_timestep,
                 seed=seed + i,   # on each step generate different randoms
-                width=width,
+                width=width,     # arun - why width and height ? image tensor is no more in width x height
                 height=height,
                 device=device,
                 is_schnell=self.flux_generator.is_schnell,
