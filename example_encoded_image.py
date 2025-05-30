@@ -7,7 +7,7 @@ from concept_attention import ConceptAttentionFluxPipeline
 
 pipeline = ConceptAttentionFluxPipeline(
     model_name="flux-schnell",    
-    device="cpu"
+    device="cuda:0"
 )
 
 image = PIL.Image.open("dragon_image.png")

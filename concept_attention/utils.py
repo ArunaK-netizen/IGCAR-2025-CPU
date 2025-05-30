@@ -17,16 +17,16 @@ def embed_concepts(
     # Embed each concept separately
     concept_embeddings = []
     for concept in concepts:
-        concept_embedding = t5(concept)
+        concept_embedding = t5(concept)   # arun - we get batch x seq_len x dim
         # Pull out the first token
         token_embedding = concept_embedding[0, 0, :] # First token of first prompt
         concept_embeddings.append(token_embedding)
-    concept_embeddings = torch.stack(concept_embeddings).unsqueeze(0)
+    concept_embeddings = torch.stack(concept_embeddings).unsqueeze(0)   # stack is basically num_concpets x dim and unsqueeze adds batch dimension
     # Add filler tokens of zeros
     concept_ids = torch.zeros(batch_size, concept_embeddings.shape[1], 3)
 
     # Embed the concepts to a clip vector
-    prompt = " ".join(concepts)
+    prompt = " ".join(concepts)  # arun - to understand the whole picture
     vec = clip(prompt)
     vec = torch.zeros_like(vec).to(vec.device)
 

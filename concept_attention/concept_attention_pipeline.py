@@ -217,7 +217,7 @@ class ConceptAttentionFluxPipeline():
             self.flux_generator.ae,
             offload=self.flux_generator.offload,
             device=device,
-        ) # arun - dimensions 1 x 16 x 64 x 64
+        ) # arun - dimensions 1 x 3 x 64 x 64?
 
         print(f"###################shape of the encoded image: {encoded_image_without_noise.shape}######################")    # arun - should be 1024 x 1024
         # Do N trials
