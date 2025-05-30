@@ -89,7 +89,7 @@ def add_noise_to_image(
     seed=63,
     width=1024,
     height=1024,
-    device="cuda",
+    device="cpu",
     is_schnell=True,
 ):
     # prepare input
@@ -118,7 +118,7 @@ def encode_image(
     image: PIL.Image.Image,
     autoencoder: torch.nn.Module,
     offload=True,
-    device="cuda",
+    device="cpu",
     height=1024,
     width=1024,
 ):
@@ -170,7 +170,7 @@ def generate_concept_basis_and_image_representation(
     seed=63,
     model_name="flux-schnell",
     offload=True,
-    device="cuda",
+    device="cpu",
     target_space="output",
     height=1024,
     width=1024,

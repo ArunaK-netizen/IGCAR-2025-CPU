@@ -18,7 +18,7 @@ from concept_attention.utils import embed_concepts
 
 def load_flow_model(
     name: str, 
-    device: str | torch.device = "cuda", 
+    device: str | torch.device = "cpu", 
     hf_download: bool = True, 
     attention_block_class=ModifiedDoubleStreamBlock,
     dit_class=ModifiedFluxDiT
@@ -34,7 +34,7 @@ def load_flow_model(
     ):
         ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
 
-    with torch.device("cuda" if ckpt_path else device):    # this is the line causing gpu memory insufficient error
+    with torch.device("cpu" if ckpt_path else device):    # this is the line causing gpu memory insufficient error
         model = dit_class(configs[name].params, attention_block_class=attention_block_class)
 
     if ckpt_path:
@@ -79,7 +79,7 @@ class FluxGenerator():
         attention_block_class=ModifiedDoubleStreamBlock,
         dit_class=ModifiedFluxDiT
     ):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
         self.offload = offload
         self.model_name = model_name
         self.is_schnell = model_name == "flux-schnell"

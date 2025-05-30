@@ -89,7 +89,7 @@ class ConceptAttentionFluxPipeline():
         self, 
         model_name: str = "flux-schnell", 
         offload_model=False,
-        device="cuda:0"
+        device="cpu"
     ):
         self.model_name = model_name
         self.offload_model = offload_model
@@ -197,10 +197,10 @@ class ConceptAttentionFluxPipeline():
         num_samples: int = 1,   # arun - the more the better defines how many images have to undergo one forward pass and average all outputs but computationally expensive
         num_steps: int = 4, # arun - number of steps to reach a noisy image 
         noise_timestep: int = 2, # arun - defines how much noise should be added into the image at each step
-        device: str = "cuda:0",
+        device: str = "cpu",
         return_pil_heatmaps: bool = True,
         seed: int = 0,
-        cmap="binary",   # arun - changed from plasma to binary
+        cmap="plasma",   # arun - changed from plasma to binary
         stop_after_multi_modal_attentions=True,
         softmax=True
     ) -> ConceptAttentionPipelineOutput:

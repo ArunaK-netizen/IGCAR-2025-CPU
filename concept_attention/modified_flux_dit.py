@@ -39,7 +39,7 @@ class ModifiedFluxDiT(nn.Module):
         self.params = params
         self.in_channels = params.in_channels
         self.out_channels = self.in_channels
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
         if params.hidden_size % params.num_heads != 0:
             raise ValueError(
                 f"Hidden size {params.hidden_size} must be divisible by num_heads {params.num_heads}"
@@ -100,8 +100,8 @@ class ModifiedFluxDiT(nn.Module):
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
 
         # running on sequences img
-        device0 = torch.device('cuda:0')  # get model device
-        device1 = torch.device('cuda:1')
+        device0 = torch.device('cpu')  # get model device
+        # device1 = torch.device('cuda:1')
         print(f"###################{device0}#############################")
         img = img.to(device0)
         txt = txt.to(device0)

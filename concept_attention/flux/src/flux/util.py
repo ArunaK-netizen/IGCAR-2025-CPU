@@ -104,7 +104,7 @@ def print_load_warning(missing: list[str], unexpected: list[str]) -> None:
     elif len(unexpected) > 0:
         print(f"Got {len(unexpected)} unexpected keys:\n\t" + "\n\t".join(unexpected))
 
-def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download: bool = True):
+def load_flow_model(name: str, device: str | torch.device = "cpu", hf_download: bool = True):
     # Loading Flux
     print("Init model")
     ckpt_path = configs[name].ckpt_path
@@ -128,7 +128,7 @@ def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download:
     return model
 
 
-def load_t5(device: str | torch.device = "cuda", max_length: int = 512) -> HFEmbedder:
+def load_t5(device: str | torch.device = "cpu", max_length: int = 512) -> HFEmbedder:
     # # Download each of the files 
     # config_file = hf_hub_download(configs["flux-schnell"].repo_id, "text_encoder_2/config.json") # File 1: config.json
     # safe_tensor_1 = hf_hub_download(configs["flux-schnell"].repo_id, "text_encoder_2/model-00001-of-00002.safetensors") # File 2: model-00001-of-00002.safetensors
@@ -161,10 +161,10 @@ def load_t5(device: str | torch.device = "cuda", max_length: int = 512) -> HFEmb
     # return t5_encoder
     return HFEmbedder("google-t5/t5-small", max_length=max_length, torch_dtype=torch.bfloat16).to(device)
 
-def load_clip(device: str | torch.device = "cuda") -> HFEmbedder:
+def load_clip(device: str | torch.device = "cpu") -> HFEmbedder:
     return HFEmbedder("openai/clip-vit-large-patch14", max_length=77, torch_dtype=torch.bfloat16).to(device)
 
-def load_ae(name: str, device: str | torch.device = "cuda", hf_download: bool = True) -> AutoEncoder:
+def load_ae(name: str, device: str | torch.device = "cpu", hf_download: bool = True) -> AutoEncoder:
     ckpt_path = configs[name].ae_path
     if (
         ckpt_path is None
