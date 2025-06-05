@@ -23,7 +23,7 @@ def get_english_name_for_index(h5py_file, index):
     return english_name
 
 def process_dataset(
-    directory: str="data/imagenet_segmentation",
+    directory: str="data/COD10K-v3",
 ):
     # Make the files
     if not os.path.exists(f"{directory}"):
