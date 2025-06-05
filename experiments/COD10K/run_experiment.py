@@ -13,10 +13,9 @@ import os
 # nltk.download('wordnet')
 from PIL import Image
 import argparse
-
-
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from concept_attention.binary_segmentation_baselines.chefer_clip_vit_baselines import CheferAttentionGradCAMSegmentationModel, CheferFullLRPSegmentationModel, CheferLRPSegmentationModel, CheferLastLayerAttentionSegmentationModel, CheferLastLayerLRPSegmentationModel, CheferRolloutSegmentationModel, CheferTransformerAttributionSegmentationModel
-
 from concept_attention.binary_segmentation_baselines.daam_sd2 import DAAMStableDiffusion2SegmentationModel
 from concept_attention.binary_segmentation_baselines.daam_sdxl import DAAMStableDiffusionXLSegmentationModel
 from concept_attention.binary_segmentation_baselines.dino import DINOSegmentationModel
@@ -26,7 +25,7 @@ from concept_attention.binary_segmentation_baselines.raw_cross_attention import 
 
 from concept_attention.utils import batch_intersection_union, batch_pix_accuracy, get_ap_scores
 
-from data_processing import Cod10k_Segmentation
+from data_processing import Cod10K_Segmentation
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     if not os.path.exists(args.image_save_dir):
         os.makedirs(args.image_save_dir)
 
-    dataset = Cod10k_Segmentation()
+    dataset = Cod10K_Segmentation()
 
     # Load up the model
     if args.segmentation_model == "RawCrossAttention":
