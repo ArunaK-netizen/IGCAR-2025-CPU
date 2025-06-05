@@ -16,7 +16,10 @@ background_concepts = ["sky", "grass", "water", "background"]
 
 def prompt_concepts_generator(file_name):
     parts = file_name.split('-')
-    object = parts[-2]
+    try:
+        object = parts[-2]
+    except:
+        print(parts)
     category = parts[3]
     is_camo = True if parts[1] == "CAM" else False
 
@@ -30,14 +33,14 @@ def prompt_concepts_generator(file_name):
 
 
 
-def process_dataset(directory: str="data/COD10K-v3/",):
+def process_dataset(directory: str="/kaggle/input/cod10k/COD10K-v2",):
     # Make the files
-    if not os.path.exists(f"{directory}"):
-        os.makedirs(f"{directory}")
-    if not os.path.exists(f"{directory}/Image"):
-        os.makedirs(f"{directory}/Image")
-    if not os.path.exists(f"{directory}/GT_Object"):
-        os.makedirs(f"{directory}/GT_Object")    
+    # if not os.path.exists(f"{directory}"):
+    #     os.makedirs(f"{directory}")
+    # if not os.path.exists(f"{directory}/Image"):
+    #     os.makedirs(f"{directory}/Image")
+    # if not os.path.exists(f"{directory}/GT_Object"):
+    #     os.makedirs(f"{directory}/GT_Object")    
     # Make a pandas dataframe
     df = pd.DataFrame(
         columns=["image_path", "segmentation_mask_path", "object_name", "background_concepts", "prompt"]
@@ -45,17 +48,16 @@ def process_dataset(directory: str="data/COD10K-v3/",):
 
 
     # Iterate through the data
-    image_directory = "./data/COD10K-v3/Train/Image"
-    target_directory = "./data/COD10K-v3/Train/GT_Object"
+    image_directory = f"{directory}/Train/Images/Image"
+    target_directory = f"{directory}/Train/GT_Objects/GT_Object"
 
     for file_name in os.listdir(image_directory):        
 
         # Load the image
-        concepts, prompt = prompt_concepts_generator(file_name)
         img = Image.open(image_directory + "/" + file_name)
         img = np.array(img).transpose((2,1,0))
 
-        target_img = Image.open(target_directory + "/" + file_name)
+        target_img = Image.open(target_directory + "/" + file_name[:-3:] + "png")
 
         # Load the target segmentation
         target = np.array(target_img).transpose((1, 0))
@@ -64,10 +66,8 @@ def process_dataset(directory: str="data/COD10K-v3/",):
         object_name, background_concepts, prompt = prompt_concepts_generator(file_name)
         # Save the image
         img_path = f"{image_directory}/{file_name}.png"
-        Image.fromarray(img).save(img_path)
         # Save the target segmentation
         target_path = f"{target_directory}/{file_name}.png"
-        Image.fromarray(target).save(target_path)
         # Add the row to the pandas dataframe
         df = pd.concat([
             df,
@@ -76,32 +76,34 @@ def process_dataset(directory: str="data/COD10K-v3/",):
                     "image_path": [img_path],
                     "segmentation_mask_path": [target_path],
                     "object_name": [object_name],
-                    "background_concepts" : background_concepts,
-                    "prompt" : prompt
+                    "background_concepts" : [background_concepts],
+                    "prompt" : [prompt]
                 },
                 index=[file_name]
             )
         ])
         # Save the pandas data frame 
-        df.to_csv(f"{directory}/data.csv")
+        working_directory = f"/kaggle/working"
+        df.to_csv(f"{working_directory}/data.csv")
 
 class Cod10K_Segmentation(data.Dataset):
     CLASSES = 2
 
     def __init__(
         self,
-        directory: str="data/COD10K-v3",
+        directory: str="/kaggle/input/cod10k/COD10K-v2",
         transform=None,
         target_transform=None
     ):
         self.directory = directory
-        self.image_directory = "./data/COD10K-v3/Train/Image"
-        self.target_directory = "./data/COD10K-v3/Train/GT_Object"
+        self.working_directory = "/kaggle/working"
+        self.image_directory = f"{directory}/Train/Images/Image"
+        self.target_directory = f"{directory}/Train/GT_Objects/Object"
         
         if not os.path.exists(f"{self.directory}/data.csv"):
             process_dataset(directory=self.directory)
         # Load the csv as a dataframe
-        self.df = pd.read_csv(f"{self.directory}/data.csv")
+        self.df = pd.read_csv(f"{self.working_directory}/data.csv")
         self.data_length = len(self.df)
 
     def __getitem__(self, index):
