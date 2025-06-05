@@ -20,7 +20,6 @@ def prompt_concepts_generator(file_name):
     category = parts[3]
     is_camo = True if parts[1] == "CAM" else False
 
-    concepts = background_concepts
     if is_camo:
         prompt = f"An image of a camouflaged {category} {object}"
     else:
@@ -64,10 +63,10 @@ def process_dataset(directory: str="data/COD10K-v3/",):
         # Get the simplified name
         object_name, background_concepts, prompt = prompt_concepts_generator(file_name)
         # Save the image
-        img_path = f"{directory}/images_exp/{file_name}.png"
+        img_path = f"{image_directory}/{file_name}.png"
         Image.fromarray(img).save(img_path)
         # Save the target segmentation
-        target_path = f"{directory}/segmentation_masks_exp/{file_name}.png"
+        target_path = f"{target_directory}/{file_name}.png"
         Image.fromarray(target).save(target_path)
         # Add the row to the pandas dataframe
         df = pd.concat([
@@ -86,7 +85,7 @@ def process_dataset(directory: str="data/COD10K-v3/",):
         # Save the pandas data frame 
         df.to_csv(f"{directory}/data.csv")
 
-class ImagenetSegmentation(data.Dataset):
+class Cod10K_Segmentation(data.Dataset):
     CLASSES = 2
 
     def __init__(
@@ -96,6 +95,8 @@ class ImagenetSegmentation(data.Dataset):
         target_transform=None
     ):
         self.directory = directory
+        self.image_directory = "./data/COD10K-v3/Train/Image"
+        self.target_directory = "./data/COD10K-v3/Train/GT_Object"
         
         if not os.path.exists(f"{self.directory}/data.csv"):
             process_dataset(directory=self.directory)
@@ -105,10 +106,9 @@ class ImagenetSegmentation(data.Dataset):
 
     def __getitem__(self, index):
         # Load the image file
-        img = Image.open(f"{self.directory}/images/{index}.png").convert("RGB")
+        img = Image.open(f"{self.image_directory}/{index}.png").convert("RGB")
         # Load the target segmentation file
-        target = Image.open(f"{self.directory}/segmentation_masks/{index}.png")
-        # Load the simplified name
+        target = Image.open(f"{self.target_directory}/{index}.png")
         object_name = self.df.iloc[index]["object_name"]
         background_concepts = self.df.iloc[index]["background_concepts"]
         prompt = self.df.iloc[index]["prompt"]

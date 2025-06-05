@@ -1,6 +1,6 @@
 """
     Here the experiment is to see if we can get good performance on the 
-    zero-shot ImageNet segmentation task. 
+    zero-shot COD10K segmentation task. 
 """
 import torch
 import numpy as np
@@ -26,7 +26,7 @@ from concept_attention.binary_segmentation_baselines.raw_cross_attention import 
 
 from concept_attention.utils import batch_intersection_union, batch_pix_accuracy, get_ap_scores
 
-from data_processing import ImagenetSegmentation
+from data_processing import Cod10k_Segmentation
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     if not os.path.exists(args.image_save_dir):
         os.makedirs(args.image_save_dir)
 
-    dataset = ImagenetSegmentation()
+    dataset = Cod10k_Segmentation()
 
     # Load up the model
     if args.segmentation_model == "RawCrossAttention":
@@ -254,5 +254,5 @@ if __name__ == "__main__":
         axs[4].set_title("Ground Truth")
         axs[4].axis("off")
 
-        plt.savefig(f"{args.image_save_dir}/imagenet_segmentation_{index}.png", dpi=300)
+        plt.savefig(f"{args.image_save_dir}/cod10k_segmentation_{index}.png", dpi=300)
         plt.close()
