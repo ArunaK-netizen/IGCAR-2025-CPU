@@ -12,7 +12,7 @@ import torch
 from torch.utils import data
 from nltk.corpus import wordnet as wn
 
-default_concepts = ["sky", "grass", "water", "background"]
+background_concepts = ["sky", "grass", "water", "background"]
 
 def prompt_concepts_generator(file_name):
     parts = file_name.split('-')
@@ -20,23 +20,16 @@ def prompt_concepts_generator(file_name):
     category = parts[3]
     is_camo = True if parts[1] == "CAM" else False
 
-    concepts = [object] + default_concepts
+    concepts = background_concepts
     if is_camo:
         prompt = f"An image of a camouflaged {category} {object}"
     else:
         prompt = f"An image of a non-camouflaged {category} animal"
+        object = "animal"
 
-    return concepts, prompt
+    return object, background_concepts, prompt
 
-def get_object_name(file_name):
-    parts = file_name.split('-')
-    object = parts[-2]
-    category = parts[3]
-    is_camo = True if parts[1] == "CAM" else False
 
-    if(is_camo):
-        return object
-    return "animal"
 
 def process_dataset(directory: str="data/COD10K-v3/",):
     # Make the files
@@ -48,7 +41,7 @@ def process_dataset(directory: str="data/COD10K-v3/",):
         os.makedirs(f"{directory}/GT_Object")    
     # Make a pandas dataframe
     df = pd.DataFrame(
-        columns=["image_path", "segmentation_mask_path", "simplified_name"]
+        columns=["image_path", "segmentation_mask_path", "object_name", "background_concepts", "prompt"]
     )
 
 
@@ -59,6 +52,7 @@ def process_dataset(directory: str="data/COD10K-v3/",):
     for file_name in os.listdir(image_directory):        
 
         # Load the image
+        concepts, prompt = prompt_concepts_generator(file_name)
         img = Image.open(image_directory + "/" + file_name)
         img = np.array(img).transpose((2,1,0))
 
@@ -68,7 +62,7 @@ def process_dataset(directory: str="data/COD10K-v3/",):
         target = np.array(target_img).transpose((1, 0))
 
         # Get the simplified name
-        simplified_name = get_object_name(file_name)
+        object_name, background_concepts, prompt = prompt_concepts_generator(file_name)
         # Save the image
         img_path = f"{directory}/images_exp/{file_name}.png"
         Image.fromarray(img).save(img_path)
@@ -82,7 +76,9 @@ def process_dataset(directory: str="data/COD10K-v3/",):
                 {
                     "image_path": [img_path],
                     "segmentation_mask_path": [target_path],
-                    "simplified_name": [simplified_name]
+                    "object_name": [object_name],
+                    "background_concepts" : background_concepts,
+                    "prompt" : prompt
                 },
                 index=[file_name]
             )
@@ -113,9 +109,11 @@ class ImagenetSegmentation(data.Dataset):
         # Load the target segmentation file
         target = Image.open(f"{self.directory}/segmentation_masks/{index}.png")
         # Load the simplified name
-        simplified_name = self.df.iloc[index]["simplified_name"]
+        object_name = self.df.iloc[index]["object_name"]
+        background_concepts = self.df.iloc[index]["background_concepts"]
+        prompt = self.df.iloc[index]["prompt"]
 
-        return img, target, simplified_name
+        return img, target, object_name, background_concepts, prompt
 
     def __len__(self):
         return self.data_length

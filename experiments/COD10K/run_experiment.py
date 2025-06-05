@@ -135,16 +135,18 @@ if __name__ == "__main__":
     total_union = 0.0
     total_ap = []
     for index in range(len(dataset)):
-        img, labels, simplified_name = dataset[index]
+        img, labels, object_name, background_concepts, prompt = dataset[index]
         # Apply transformations
         img = image_transforms(img)
         labels = label_transforms(labels)
         # Run the segmentation model
         mask, coefficients, reconstructed_image = segmentation_model(
             img,
-            target_concepts=[simplified_name],
-            concepts=[simplified_name] + args.background_concepts,
-            captions=[f"a {simplified_name}"],
+            target_concepts=[object_name],
+            # concepts=[object_name] + args.background_concepts,
+            concepts = [object_name] + background_concepts,
+            # captions=[f"a {simplified_name}"],
+            captions = [prompt],
             # l1_penalty=0.001,
             stop_after_multimodal_attentions=True,
             mean_value_threshold=True,
