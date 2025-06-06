@@ -86,8 +86,8 @@ def process_dataset(directory: str="/kaggle/input/cod10k/COD10K-v2",):
                 )
             ])
             # Save the pandas data frame 
-            if not os.path.exists(f"{working_directory}/data.csv"):
-                df.to_csv(f"{working_directory}/data.csv")
+        if not os.path.exists(f"{working_directory}/data.csv"):
+            df.to_csv(f"{working_directory}/data.csv")
 
 class Cod10K_Segmentation(data.Dataset):
     CLASSES = 2
