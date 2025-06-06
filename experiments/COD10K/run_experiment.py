@@ -228,8 +228,15 @@ if __name__ == "__main__":
         total_union += current_union
         unpadded_coefficients = torch.stack((1 - unpadded_coefficients, unpadded_coefficients)).unsqueeze(0)
         labels = torch.Tensor(labels).unsqueeze(0)
+        print(f"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ coeff, labels: {unpadded_coefficients.shape, labels.shape} @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        predict = unpadded_coefficients[0, 0]  # shape: [5, 224, 224]
+        target = labels[0]                    # shape: [224, 224]
+
+        # Expand to [B, C, H, W] and [B, H, W]
+        predict = predict.unsqueeze(0)
+        target = target.unsqueeze(0)
         ap_score = np.nan_to_num(
-            get_ap_scores(unpadded_coefficients, labels)
+            get_ap_scores(predict, target)
         )
         total_ap += [ap_score]
         pixAcc = (
