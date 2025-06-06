@@ -1,6 +1,7 @@
 # 
 python -u run_experiment.py \
-    --device cuda:0 \
+    # --device cuda:0 \
+    --device cpu \
     --num_samples 1 \
     --num_steps 4 \
     --noise_timestep 1 \

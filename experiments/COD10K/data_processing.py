@@ -84,7 +84,8 @@ def process_dataset(directory: str="/kaggle/input/cod10k/COD10K-v2",):
         ])
         # Save the pandas data frame 
         working_directory = f"/kaggle/working"
-        df.to_csv(f"{working_directory}/data.csv")
+        if not os.path.exists(f"{working_directory}/data.csv"):
+            df.to_csv(f"{working_directory}/data.csv")
 
 class Cod10K_Segmentation(data.Dataset):
     CLASSES = 2
@@ -107,15 +108,20 @@ class Cod10K_Segmentation(data.Dataset):
         self.data_length = len(self.df)
 
     def __getitem__(self, index):
-        # Load the image file
-        img = Image.open(f"{self.image_directory}/{index}.png").convert("RGB")
-        # Load the target segmentation file
-        target = Image.open(f"{self.target_directory}/{index}.png")
-        object_name = self.df.iloc[index]["object_name"]
-        background_concepts = self.df.iloc[index]["background_concepts"]
-        prompt = self.df.iloc[index]["prompt"]
+        row = self.df.iloc[index]
+
+        img_path = os.path.join(self.directory, row["image_path"])
+        target_path = os.path.join(self.directory, row["segmentation_mask_path"])
+
+        img = Image.open(img_path).convert("RGB")
+        target = Image.open(target_path)
+
+        object_name = row["object_name"]
+        background_concepts = row["background_concepts"]
+        prompt = row["prompt"]
 
         return img, target, object_name, background_concepts, prompt
+
 
     def __len__(self):
         return self.data_length

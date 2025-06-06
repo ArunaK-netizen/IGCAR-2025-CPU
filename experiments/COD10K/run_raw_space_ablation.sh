@@ -1,6 +1,7 @@
 # 
 python -u run_experiment.py \
-    --device cuda:1 \
+    # --device cuda:1 \
+    --device cpu \
     --num_samples 1 \
     --num_steps 4 \
     --noise_timestep 1 \
@@ -13,7 +14,8 @@ python -u run_experiment.py \
     > results/logs/raw_space_ablation/raw_output_normed_softmax.log
 
 python -u run_experiment.py \
-    --device cuda:1 \
+    # --device cuda:1 \
+    --device cpu \
     --num_samples 1 \
     --num_steps 4 \
     --noise_timestep 1 \

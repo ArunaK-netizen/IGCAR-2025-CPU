@@ -1,7 +1,8 @@
 
 # Run cross and self
 python -u run_experiment.py \
-    --device cuda:0 \
+    # --device cuda:0 \
+    --device cpu \
     --num_samples 5 \
     --model_name flux-schnell \
     --num_steps 4 \

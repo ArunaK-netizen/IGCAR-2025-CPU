@@ -52,7 +52,9 @@ if __name__ == "__main__":
             "DINO"
         ]
     )
-    parser.add_argument("--device", type=str, default="cuda:3")
+    # parser.add_argument("--device", type=str, default="cuda:3")
+    parser.add_argument("--device", type=str, default="cpu")
+
     parser.add_argument("--normalize_concepts", action="store_true")
     parser.add_argument("--softmax", action="store_true")
     parser.add_argument("--offload", default=False)
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     total_inter = 0.0
     total_union = 0.0
     total_ap = []
-    for index in range(len(dataset)):
+    for index in range(1,len(dataset)):
         img, labels, object_name, background_concepts, prompt = dataset[index]
         # Apply transformations
         img = image_transforms(img)
