@@ -10,6 +10,62 @@ from concept_attention.image_generator import FluxGenerator
 from concept_attention.segmentation import SegmentationAbstractClass, add_noise_to_image, encode_image
 from concept_attention.utils import embed_concepts, linear_normalization
 
+def compute_heatmaps_from_vectors(
+    image_vectors,
+    concept_vectors,
+    layer_indices: list[int],
+    timesteps: list[int] = list(range(4)),
+    softmax: bool = True,
+    normalize_concepts: bool = False
+):
+    """
+        Accepts image vectors and concept vectors. These can be from cross attentions or attention outputs.  
+    """
+    # Check if there are heads in the input 
+    if len(image_vectors.shape) == 6: 
+        # Collapse the had dimension
+        image_vectors = einops.rearrange(
+            image_vectors,
+            "time layers batch head patches dim -> time layers batch patches (head dim)"
+        )
+        concept_vectors = einops.rearrange(
+            concept_vectors,
+            "time layers batch head concepts dim -> time layers batch concepts (head dim)"
+        )
+
+
+    # Apply linear normalization to concepts
+    if normalize_concepts:
+        concept_vectors = linear_normalization(concept_vectors, dim=-2)
+
+    # Compute heatmaps 
+    heatmaps = einops.einsum(
+        image_vectors, 
+        concept_vectors,
+        "time batch patches dim, time batch concepts dim -> time batch concepts patches",
+    )
+
+    # Apply softmax
+    if softmax:
+        heatmaps = torch.nn.functional.softmax(heatmaps, dim=-2)
+    # Pull out the timesteps and layers
+    heatmaps = heatmaps[timesteps]
+    # Average over the heatmaps
+    heatmaps = einops.reduce(
+        heatmaps,
+        "time batch concepts patches -> batch concepts patches",
+        reduction="mean"
+    )
+    heatmaps = einops.rearrange(
+        heatmaps,
+        "batch concepts (h w) -> batch concepts h w",
+        h=64,
+        w=64
+    )
+
+    return heatmaps
+
+
 class RawOutputSpaceBaseline():
     """
         This class implements the cross attention baseline. 
@@ -133,14 +189,21 @@ class RawOutputSpaceSegmentationModel(SegmentationAbstractClass):
         height: int = 1024,
         stop_after_multimodal_attentions: bool = True,
         layers: list[int] = list(range(19)),
+        layer_indices = list(range(15, 19)),
         normalize_concepts=True,
         softmax: bool = False,
+        num_inference_steps: int = 4,
+        timesteps = None,
         joint_attention_kwargs=None,
         **kwargs
     ):
         """
             Takes a real image and generates a segmentation map. 
         """
+
+        if timesteps is None:
+            timesteps = list(range(num_inference_steps))
+        
         # Encode the image into the VAE latent space
         encoded_image_without_noise = encode_image(
             image,
@@ -149,7 +212,9 @@ class RawOutputSpaceSegmentationModel(SegmentationAbstractClass):
             device=device,
         )
         # Do N trials
-        all_concept_heatmaps = []
+        
+        all_image_vectors = []
+        all_concept_vectors = []
         for i in range(num_samples):
             # Add noise to image
             encoded_image, timesteps = add_noise_to_image(
@@ -188,7 +253,7 @@ class RawOutputSpaceSegmentationModel(SegmentationAbstractClass):
             t_curr = timesteps[0]
             t_prev = timesteps[1]
             t_vec = torch.full((encoded_image.shape[0],), t_curr, dtype=encoded_image.dtype, device=encoded_image.device)
-            pred, _, concept_heatmaps = self.generator.model(
+            _, concept_heatmaps = self.generator.model(
                 img=inp["img"],
                 img_ids=inp["img_ids"],
                 txt=inp["txt"],
@@ -203,9 +268,31 @@ class RawOutputSpaceSegmentationModel(SegmentationAbstractClass):
                 joint_attention_kwargs=joint_attention_kwargs,
             )
 
-            all_concept_heatmaps.append(concept_heatmaps)
 
-        all_concept_heatmaps = torch.stack(all_concept_heatmaps, dim=0)
+            # all_concept_heatmaps.append(concept_heatmaps["cross_attention_image_vectors"])
+            # all_concept_heatmaps.append(concept_heatmaps["cross_attention_concept_vectors"])
+            all_image_vectors.append(concept_heatmaps["output_space_image_vectors"])
+            all_concept_vectors.append(concept_heatmaps["output_space_concept_vectors"])
+            # all_concept_heatmaps.append(concept_heatmaps["output_space_concept_vectors"])
+
+
+        # Stack and average across samples
+        all_image_vectors = torch.stack(all_image_vectors, dim=0)  # [samples, time, layers, batch, patches, dim]
+        all_concept_vectors = torch.stack(all_concept_vectors, dim=0)
+
+        # Average across samples
+        image_vectors = einops.reduce(all_image_vectors, "samples time batch patches dim -> time batch patches dim", reduction="mean")
+        concept_vectors = einops.reduce(all_concept_vectors, "samples time batch concepts dim -> time batch concepts dim", reduction="mean")
+
+        # Compute heatmaps
+        concept_heatmaps = compute_heatmaps_from_vectors(
+            image_vectors,
+            concept_vectors,
+            layer_indices=layer_indices,
+            timesteps=timesteps,  
+            softmax=softmax,
+            normalize_concepts=normalize_concepts
+        )
 
         if not stop_after_multimodal_attentions:
             img = inp["img"] + (t_prev - t_curr) * pred
@@ -222,41 +309,7 @@ class RawOutputSpaceSegmentationModel(SegmentationAbstractClass):
             # reconstructed_image = PIL.Image.fromarray(img.cpu().byte().numpy())
             reconstructed_image = PIL.Image.fromarray((127.5 * (img + 1.0)).cpu().byte().numpy())
         else:
-            img = None
             reconstructed_image = None
-        # Decode the image 
-        if offload:
-            self.generator.model.cpu()
-            torch.cuda.empty_cache()
-            self.generator.ae.decoder.to(device)
-
-
-        # if layers is not None:
-        #     # Pull out the layer index
-        #     concept_vectors = concept_vectors[layers]
-        #     image_vectors = image_vectors[layers]
-
-        # Apply linear normalization to concepts
-        # if normalize_concepts:
-        #     concept_vectors = linear_normalization(concept_vectors, dim=-2)
-
-        # Apply softmax
-        if softmax:
-            all_concept_heatmaps = torch.nn.functional.softmax(all_concept_heatmaps, dim=-2)
-
-        concept_heatmaps = all_concept_heatmaps[:, layers]
-        concept_heatmaps = einops.reduce(
-            concept_heatmaps,
-            "samples layers batch concepts patches -> batch concepts patches",
-            reduction="mean"
-        )
-        # Convert to torch float32
-        concept_heatmaps = concept_heatmaps.to(torch.float32)
-        concept_heatmaps = einops.rearrange(
-            concept_heatmaps,
-            "batch concepts (h w) -> batch concepts h w",
-            h=64,
-            w=64
-        )
+        
 
         return concept_heatmaps, reconstructed_image
