@@ -13,6 +13,7 @@ import os
 # nltk.download('wordnet')
 from PIL import Image
 import argparse
+import ast
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from concept_attention.binary_segmentation_baselines.chefer_clip_vit_baselines import CheferAttentionGradCAMSegmentationModel, CheferFullLRPSegmentationModel, CheferLRPSegmentationModel, CheferLastLayerAttentionSegmentationModel, CheferLastLayerLRPSegmentationModel, CheferRolloutSegmentationModel, CheferTransformerAttributionSegmentationModel
@@ -77,7 +78,6 @@ if __name__ == "__main__":
         os.makedirs(args.image_save_dir)
 
     dataset = Cod10K_Segmentation()
-
     # Load up the model
     if args.segmentation_model == "RawCrossAttention":
         segmentation_model = RawCrossAttentionSegmentationModel(
@@ -129,14 +129,16 @@ if __name__ == "__main__":
         # transforms.Resize((64, 64), Image.NEAREST),
         transforms.ToTensor()
     ])
+
     # Iterate through the first N images, run concept encoding
     total_correct = 0.0
     total_label = 0.0
     total_inter = 0.0
     total_union = 0.0
     total_ap = []
-    for index in range(1,len(dataset)):
+    for index in range(0,len(dataset)):
         img, labels, object_name, background_concepts, prompt = dataset[index]
+        background_concepts = ast.literal_eval(background_concepts)
         # Apply transformations
         img = image_transforms(img)
         labels = label_transforms(labels)
@@ -166,6 +168,7 @@ if __name__ == "__main__":
                 "concept_self_attention": args.concept_self_attention
             }
         )
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Result generated @@@@@@@@@@@@@@@@@@@@@@@@@@")
         mask = mask[0]
         coefficients = coefficients[0]
         if len(coefficients.shape) == 1:    
@@ -254,6 +257,5 @@ if __name__ == "__main__":
         axs[4].imshow(labels.squeeze().numpy())
         axs[4].set_title("Ground Truth")
         axs[4].axis("off")
-
         plt.savefig(f"{args.image_save_dir}/cod10k_segmentation_{index}.png", dpi=300)
         plt.close()

@@ -42,50 +42,52 @@ def process_dataset(directory: str="/kaggle/input/cod10k/COD10K-v2",):
     # if not os.path.exists(f"{directory}/GT_Object"):
     #     os.makedirs(f"{directory}/GT_Object")    
     # Make a pandas dataframe
-    df = pd.DataFrame(
-        columns=["image_path", "segmentation_mask_path", "object_name", "background_concepts", "prompt"]
-    )
+    working_directory = f"/kaggle/working"
+    if not os.path.exists(f"{working_directory}/data.csv"):
+
+        df = pd.DataFrame(
+            columns=["image_path", "segmentation_mask_path", "object_name", "background_concepts", "prompt"]
+        )
 
 
-    # Iterate through the data
-    image_directory = f"{directory}/Train/Images/Image"
-    target_directory = f"{directory}/Train/GT_Objects/GT_Object"
+        # Iterate through the data
+        image_directory = f"{directory}/Train/Images/Image"
+        target_directory = f"{directory}/Train/GT_Objects/GT_Object"
 
-    for file_name in os.listdir(image_directory):        
+        for file_name in os.listdir(image_directory):        
 
-        # Load the image
-        img = Image.open(image_directory + "/" + file_name)
-        img = np.array(img).transpose((2,1,0))
+            # Load the image
+            img = Image.open(image_directory + "/" + file_name)
+            img = np.array(img).transpose((2,1,0))
 
-        target_img = Image.open(target_directory + "/" + file_name[:-3:] + "png")
+            target_img = Image.open(target_directory + "/" + file_name[:-3:] + "png")
+            # Load the target segmentation
+            target = np.array(target_img).transpose((1, 0))
 
-        # Load the target segmentation
-        target = np.array(target_img).transpose((1, 0))
+            # Get the simplified name
+            object_name, background_concepts, prompt = prompt_concepts_generator(file_name)
+            # Save the image
+            img_path = f"{image_directory}/{file_name}"
+            # Save the target segmentation
+            target_path = f"{target_directory}/{file_name[:-4]}.png"
 
-        # Get the simplified name
-        object_name, background_concepts, prompt = prompt_concepts_generator(file_name)
-        # Save the image
-        img_path = f"{image_directory}/{file_name}.png"
-        # Save the target segmentation
-        target_path = f"{target_directory}/{file_name}.png"
-        # Add the row to the pandas dataframe
-        df = pd.concat([
-            df,
-            pd.DataFrame(
-                {
-                    "image_path": [img_path],
-                    "segmentation_mask_path": [target_path],
-                    "object_name": [object_name],
-                    "background_concepts" : [background_concepts],
-                    "prompt" : [prompt]
-                },
-                index=[file_name]
-            )
-        ])
-        # Save the pandas data frame 
-        working_directory = f"/kaggle/working"
-        if not os.path.exists(f"{working_directory}/data.csv"):
-            df.to_csv(f"{working_directory}/data.csv")
+            # Add the row to the pandas dataframe
+            df = pd.concat([
+                df,
+                pd.DataFrame(
+                    {
+                        "image_path": [img_path],
+                        "segmentation_mask_path": [target_path],
+                        "object_name": [object_name],
+                        "background_concepts" : [background_concepts],
+                        "prompt" : [prompt]
+                    },
+                    index=[file_name]
+                )
+            ])
+            # Save the pandas data frame 
+            if not os.path.exists(f"{working_directory}/data.csv"):
+                df.to_csv(f"{working_directory}/data.csv")
 
 class Cod10K_Segmentation(data.Dataset):
     CLASSES = 2
