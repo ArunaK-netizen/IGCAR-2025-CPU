@@ -35,7 +35,7 @@ if __name__ == "__main__":
         "--segmentation_model", 
         type=str, 
         # default="RawOutputSpace",
-        default="DAAMSDXL",
+        default="RawOutputSpace",
         # default="CheferAttentionGradCAM",
         choices=[
             "RawOutputSpace", 
