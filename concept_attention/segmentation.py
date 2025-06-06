@@ -75,7 +75,7 @@ class SegmentationAbstractClass(ABC):
                     mask = coefficients[target_concept_index] > 0.0
                 target_concept_coefficients = coefficients[target_concept_index]
                 mask = mask.cpu().numpy()
-                target_concept_coefficients = target_concept_coefficients.detach().cpu().numpy()
+                target_concept_coefficients = target_concept_coefficients.to(torch.float32).detach().cpu().numpy()
                 all_masks.append(mask)    
                 all_coefficients.append(target_concept_coefficients)
                 reconstructed_images.append(reconstructed_image)

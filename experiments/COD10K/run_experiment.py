@@ -191,7 +191,7 @@ if __name__ == "__main__":
             ).squeeze()
         # Upscale coefficients to 224 x 224
         coefficients = torch.nn.functional.interpolate(
-            coefficients.unsqueeze(0).unsqueeze(0),
+            coefficients.unsqueeze(0),
             size=(224, 224),
             # size=(64, 64),
             mode="nearest"
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         # Upscale the mask to 224 x 224
         mask = torch.Tensor(mask)
         mask = torch.nn.functional.interpolate(
-            mask.unsqueeze(0).unsqueeze(0),
+            mask.unsqueeze(0),
             size=(224, 224),
             # size=(64, 64),
             mode="nearest"
@@ -211,13 +211,19 @@ if __name__ == "__main__":
         unpadded_target = torch.Tensor(labels)
         unpadded_coefficients = torch.Tensor(coefficients)
         mask = torch.Tensor(mask)
-        unpadded_mask = torch.stack((1 - mask, mask))
-        unpadded_target = torch.stack((1 - unpadded_target, unpadded_target))
-        current_correct, current_label = batch_pix_accuracy(unpadded_mask, unpadded_target) # (batch_size, h * w)
+        foreground_mask = mask[1:].sum(dim=0)  # shape (224,224)
+        foreground_mask = (foreground_mask > 0).float()
+
+        # Create 2-channel mask as background and foreground
+        binary_mask = torch.stack((1 - foreground_mask, foreground_mask))  # shape (2, 224, 224)
+
+        # Similarly for labels:
+        binary_label = torch.stack((1 - unpadded_target, unpadded_target))
+        current_correct, current_label = batch_pix_accuracy(binary_mask, binary_label) # (batch_size, h * w)
         total_correct += current_correct
         total_label += current_label
         # Add a 1 - mask and 1 - label
-        current_inter, current_union = batch_intersection_union(unpadded_mask, unpadded_target, nclass=2)
+        current_inter, current_union = batch_intersection_union(binary_mask, binary_label, nclass=2)
         total_inter += current_inter
         total_union += current_union
         unpadded_coefficients = torch.stack((1 - unpadded_coefficients, unpadded_coefficients)).unsqueeze(0)
